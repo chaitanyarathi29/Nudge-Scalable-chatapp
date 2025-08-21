@@ -1,135 +1,124 @@
-# Turborepo starter
+# Nudge Scalable Chat App
 
-This Turborepo starter is maintained by the Turborepo core team.
+A scalable real-time chat application built with **Next.js**, **Socket.IO**, and **Redis Pub/Sub**. This project demonstrates how to scale WebSocket-based applications horizontally across multiple servers using Redis as a message broker.
 
-## Using this example
+---
 
-Run the following command:
+## 🚀 Features
 
-```sh
-npx create-turbo@latest
+- Real-time chat with Socket.IO
+- Scalable architecture using Redis Pub/Sub
+- Multiple server support (horizontal scaling)
+- Modern React/Next.js frontend
+
+<img width="1400" height="1106" alt="image" src="https://github.com/user-attachments/assets/84b2bd6f-a356-47b5-95e8-bb0333e90d12" />
+
+---
+
+## 🏗️ Architecture Overview
+
+### Why Redis Pub/Sub?
+
+WebSocket servers (like Socket.IO) store client connections in memory. If you run multiple server instances (for load balancing or high availability), messages sent to one server won't reach clients connected to another server.
+
+**Redis Pub/Sub** solves this by acting as a central message broker:
+
+- **Publish**: When a client sends a message, the server publishes it to a Redis channel.
+- **Subscribe**: All server instances subscribe to the same Redis channel.
+- **Broadcast**: When a message is published, Redis notifies all subscribers (servers), which then broadcast the message to their connected clients.
+
+This ensures all clients receive messages, no matter which server instance they're connected to.
+
+---
+
+## 🛠️ How It Works
+
+### 1. Server Side (`apps/server/src/services/socket.ts`)
+
+- Each server instance creates a Redis **publisher** and **subscriber**.
+- On receiving a message from a client, the server **publishes** it to the `MESSAGES` channel.
+- All servers **subscribe** to `MESSAGES`. When a message is published, each server **emits** it to its connected clients.
+
+```typescript
+// ...existing code...
+const pub = new Redis.default(redis_url);
+const sub = new Redis.default(redis_url);
+
+sub.subscribe("MESSAGES")
+
+io.on("connect", (socket) => {
+    socket.on("event:message", async ({ message }) => {
+        await pub.publish('MESSAGES', JSON.stringify({ message }))
+    });
+});
+
+sub.on('message', (channel, message) => {
+    if(channel === "MESSAGES"){
+        io.emit("message", message);
+    }
+})
+// ...existing code...
 ```
 
-## What's inside?
+### 2. Client Side (`apps/web/context/SocketProvider.tsx`)
 
-This Turborepo includes the following packages/apps:
+- The React app connects to the server via Socket.IO.
+- Messages are sent and received in real-time.
 
-### Apps and Packages
+---
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## 🏃‍♂️ Running Multiple Servers
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+To scale horizontally, simply start multiple server instances (on different ports or machines), all pointing to the same Redis instance:
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```bash
+PORT=8000 node apps/server/src/index.js
+PORT=8001 node apps/server/src/index.js
+# ...and so on
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+All servers will share messages via Redis, ensuring all clients stay in sync.
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+---
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+## 📦 Getting Started
 
-### Develop
+1. **Install dependencies**  
+   ```bash
+   yarn install
+   ```
 
-To develop all apps and packages, run the following command:
+2. **Set up Redis**  
+   - Use a local Redis instance or a cloud provider.
+   - Set `REDIS_URL` in your environment variables.
 
-```
-cd my-turborepo
+3. **Start the server**  
+   ```bash
+   yarn workspace server dev
+   ```
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+4. **Start the frontend**  
+   ```bash
+   yarn workspace web dev
+   ```
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+---
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+## 📝 Summary
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+- **Redis Pub/Sub** enables real-time message broadcasting across multiple server instances.
+- This architecture is essential for scaling WebSocket apps beyond a single server.
+- The app is ready for production scaling—just add more servers!
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+---
 
-### Remote Caching
+## 📚 References
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+- [Socket.IO Scaling with Redis](https://socket.io/docs/v4/using-multiple-nodes/)
+- [Redis Pub/Sub Documentation](https://redis.io/docs/interact/pubsub/)
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+---
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+## 💡 Contributing
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+PRs and suggestions welcome!
