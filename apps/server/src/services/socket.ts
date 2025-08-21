@@ -1,9 +1,13 @@
 import { Server } from "socket.io";
 import Redis from "ioredis";
+import dotenv from 'dotenv'
 
+dotenv.config();
 
-const pub = new Redis.default("rediss://default:AVhUAAIncDEwMzI4MmJiMGVhYWQ0M2RlYWE2MzQ0YjRhMTEyYTJiY3AxMjI2MTI@secure-whale-22612.upstash.io:6379");
-const sub = new Redis.default("rediss://default:AVhUAAIncDEwMzI4MmJiMGVhYWQ0M2RlYWE2MzQ0YjRhMTEyYTJiY3AxMjI2MTI@secure-whale-22612.upstash.io:6379");
+const redis_url = process.env.REDIS_URL ?? "";
+
+const pub = new Redis.default(redis_url);
+const sub = new Redis.default(redis_url);
 
 class SocketService {
     private _io: Server;
