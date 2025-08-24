@@ -11,7 +11,7 @@ A scalable real-time chat application built with **Next.js**, **Socket.IO**, and
 - Multiple server support (horizontal scaling)
 - Modern React/Next.js frontend
 
-<img width="1400" height="1106" alt="image" src="https://github.com/user-attachments/assets/84b2bd6f-a356-47b5-95e8-bb0333e90d12" />
+<img width="1364" height="898" alt="Screenshot 2025-08-24 120411" src="https://github.com/user-attachments/assets/065d35ef-3648-427b-8b88-a7f7b07f5878" />
 
 ---
 
