@@ -1,4 +1,4 @@
-# Nudge Scalable Chat App
+# Nudge Scalable WS App
 
 A **production-ready, scalable real-time chat application** built with **Next.js**, **Socket.IO**, **Redis Pub/Sub**, **Kafka**, and **Prisma**.  
 This project demonstrates how to architect a modern WebSocket-based chat app that can scale horizontally across multiple servers, reliably persist messages, and prevent database overload using a robust message broker pipeline.
