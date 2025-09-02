@@ -6,7 +6,7 @@ import { useState } from 'react'
 export default function Page() {
 
   const { sendMessage, messages } = useSocket();
-  const [message, setMessage] = useState('');
+  const [ message, setMessage ] = useState('');
 
   return (
     <div>

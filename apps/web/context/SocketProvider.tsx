@@ -36,15 +36,15 @@ export const SocketProvider: FC<SocketProviderProps> = ({children}) => {
     }, [socket]);
 
     const onMessageRec = useCallback((msg: string) => {
-        const {message} = JSON.parse(msg) as {message: string};
+        const { message } = JSON.parse(msg) as { message: string };
         setMessages((prev) => [...prev, message])
         console.log('From server msg Rec', msg)
-    },[])
+    },[]);
 
     useEffect(() => {
         const _socket = io("http://localhost:8000");
         _socket.on('message', onMessageRec);
-
+ 
         setSocket(_socket);
 
         return () => {
